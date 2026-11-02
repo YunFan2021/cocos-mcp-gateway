@@ -1,23 +1,18 @@
 // cli/anim-cmd.js — anim 子命令
 //
-// .anim 文件与 prefab 同为 JSON 数组 + __id__ 引用格式，editPrefab 可直接复用。
-// 本子命令是封装：让用户语义上明确"这是动画文件操作"，并允许 query 节点结构。
+// .anim 以 AnimationClip 为根，使用专用解析器和曲线操作。
 //
 // 用法：
 //   anim query <anim> [--selector tree|node|find|field] ...
 //   anim batch <anim> <ops.json> [--dry-run]
 //
-// 注意：op 库当前面向 cc.Node 树设计，对 .anim 内的 cc.AnimationClip /
-// cc.Track / cc.Curve 等结构无专属 op，但通用的 set-component-field（用于
-// AnimationClip 顶层）/ set-component-ref / dedupe-component 等仍可用。
-// 真正的 anim 曲线编辑应由 src/anim-primitives.js 暴露的 helper 在脚本中处理。
+// batch 支持 offset-curve / set-keyframe-value；曲线 id 从 query 返回值获取。
 
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
-const { editPrefab } = require('../editor/index.js');
-const { queryPrefab } = require('../query/index.js');
+const { queryAnimation, editAnimation } = require('../animation.js');
 const { parseFlags } = require('./flags.js');
 
 function die(msg) {
@@ -37,12 +32,16 @@ function cmdAnim(args) {
     process.stdout.write(`anim <subcommand> <file> [args]
 
 Subcommands:
-  query <anim> [--selector tree|node|find|field] ...
-  batch <anim> <ops.json> [--project-root <path>] [--dry-run]
+  query <anim>                                  # 动画轨道、绑定路径和曲线
+  query <anim> --selector node --name <节点路径>
+  query <anim> --selector find --type cc.RealCurve
+  query <anim> --selector field [--id <对象id>] --field <字段>
+  batch <anim> <ops.json> [--dry-run]
 
-注意：.anim 与 .prefab 同为 JSON 数组 + __id__ 引用格式，复用 editPrefab。
-op 库当前主要面向 cc.Node 树；编辑动画曲线请用 src/anim-primitives.js
-暴露的 helper 在脚本中处理。
+曲线操作：
+  {"op":"offset-curve","curveId":29,"offset":10}
+  {"op":"set-keyframe-value","curveId":29,"index":0,"value":100}
+只改变关键帧数值，保留时间、插值、切线及编辑器信息。
 `);
     return;
   }
@@ -55,19 +54,18 @@ op 库当前主要面向 cc.Node 树；编辑动画曲线请用 src/anim-primiti
     if (!fs.existsSync(animPath)) die(`anim query: 文件不存在: ${animPath}`);
 
     const selectorType = flags['selector'] || 'tree';
-    const withComps = flags['with-comps'] === true;
     let selector;
-    if (selectorType === 'tree') selector = { type: 'tree', withComps };
-    else if (selectorType === 'node') selector = { type: 'node', name: flags['name'], withComps };
+    if (selectorType === 'tree') selector = { type: 'tree' };
+    else if (selectorType === 'node') selector = { type: 'node', name: flags['name'] };
     else if (selectorType === 'find') selector = { type: 'find', nodeType: flags['type'] };
     else if (selectorType === 'field') selector = {
-      type: 'field', name: flags['name'], componentType: flags['comp'], field: flags['field'],
+      type: 'field', id: flags['id'] === undefined ? undefined : Number(flags['id']), field: flags['field'],
     };
     else die(`anim query: 不支持的 --selector "${selectorType}"`);
 
     let result;
     try {
-      result = queryPrefab(animPath, selector);
+      result = queryAnimation(animPath, selector);
     } catch (e) {
       die('anim query 失败: ' + e.message);
     }
@@ -94,12 +92,11 @@ op 库当前主要面向 cc.Node 树；编辑动画曲线请用 src/anim-primiti
     if (!Array.isArray(ops)) die('anim batch: ops.json 必须是数组');
 
     const editOptions = {};
-    if (flags['project-root']) editOptions.projectRoot = resolvePath(flags['project-root']);
     if (flags['dry-run'] === true) editOptions.dryRun = true;
 
     let result;
     try {
-      result = editPrefab(animPath, ops, editOptions);
+      result = editAnimation(animPath, ops, editOptions);
     } catch (e) {
       die('anim batch 失败: ' + e.message);
     }

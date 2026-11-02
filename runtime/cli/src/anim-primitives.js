@@ -2,7 +2,7 @@
 // CC3 AnimationClip (.anim) 对象构建原语（纯 CJS，零三方依赖）
 //
 // .anim 文件和 .prefab 一样是 JSON 数组 + `__id__` 交叉引用，
-// 复用 parsePrefab / writePrefab 解析写入。
+// 使用 parseAnimation 解析，复用 writePrefab 保留文件格式。
 //
 // 但 .anim 内部对象类型（AnimationClip / Track / Curve / Channel）
 // 有自己的 schema 规范，最容易踩的坑：

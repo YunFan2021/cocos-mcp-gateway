@@ -32,6 +32,7 @@ const { execRemoveNode } = require('./ops/remove-node.js');
 const { execCloneNode } = require('./ops/clone-node.js');
 const { execAddComponent } = require('./ops/add-component.js');
 const { execRemoveComponent } = require('./ops/remove-component.js');
+const { execReplaceComponent } = require('./ops/replace-component.js');
 const { execSetComponentRef } = require('./ops/set-component-ref.js');
 const { execSetNestedComponentField } = require('./ops/set-nested-component-field.js');
 const { execBulkSet } = require('./ops/bulk-set.js');
@@ -49,6 +50,8 @@ const { execAddSpineSocket } = require('./ops/add-spine-socket.js');
 const { execResetOverrides } = require('./ops/reset-overrides.js');
 const { execEnsureMeta } = require('./ops/ensure-meta.js');
 const { execSyncNestedRoots } = require('./ops/sync-nested-roots.js');
+const { execRemapAssets } = require('./ops/remap-assets.js');
+const { execUnpackNestedPrefab } = require('./ops/unpack-nested-prefab.js');
 const { validateOps } = require('./op-schema.js');
 
 const OP_HANDLERS = {
@@ -69,6 +72,7 @@ const OP_HANDLERS = {
   'clone-node': execCloneNode,
   'add-component': execAddComponent,
   'remove-component': execRemoveComponent,
+  'replace-component': execReplaceComponent,
   'set-component-ref': execSetComponentRef,
   'set-nested-component-field': execSetNestedComponentField,
   'bulk-set': execBulkSet,
@@ -86,6 +90,8 @@ const OP_HANDLERS = {
   'reset-overrides': execResetOverrides,
   'ensure-meta': execEnsureMeta,
   'sync-nested-roots': execSyncNestedRoots,
+  'remap-assets': execRemapAssets,
+  'unpack-nested-prefab': execUnpackNestedPrefab,
 };
 
 /**
