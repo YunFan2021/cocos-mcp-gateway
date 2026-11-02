@@ -26,11 +26,16 @@ const T = {
   source: 'node-selector',
   refNode: 'node-selector',
   componentType: 'string',
+  replacementType: 'string',
+  preserveProperties: 'any',
+  refreshFileId: 'boolean',
   property: 'string|array',
   refType: 'string',
   refSubNode: 'any', // string | string[]
   value: 'any',
   props: 'object',
+  assetMap: 'object',
+  fileIdMap: 'object',
   selector: 'object',
   order: 'array',
   text: 'string',
@@ -97,6 +102,8 @@ const T = {
 // 每个 op 的字段白名单（含必填 + 可选；'op' 隐含必填）
 // typeOverrides：对全局 T 表的字段类型做局部覆盖（同名字段在不同 op 里语义不同时用）
 const SCHEMAS = {
+  'unpack-nested-prefab':    { required: ['node'], optional: [] },
+  'remap-assets':             { required: ['assetMap'], optional: ['fileIdMap'] },
   'set-position':            { required: ['node', 'x', 'y'],                       optional: ['z'] },
   'set-label-text':          { required: ['node', 'text'],                         optional: ['labelNode'] },
   'set-sprite-frame':        { required: ['node', 'uuid'],                         optional: ['spriteNode'] },
@@ -116,6 +123,7 @@ const SCHEMAS = {
   'clone-node':              { required: ['source', 'parent', 'name'],             optional: [] },
   'add-component':           { required: ['node', 'componentType'],                optional: ['props'] },
   'remove-component':        { required: ['node', 'componentType'],                optional: [] },
+  'replace-component':       { required: ['node', 'componentType'],                optional: ['replacementType', 'preserveProperties', 'props', 'refreshFileId'] },
   'set-component-ref':       { required: ['node', 'componentType', 'property', 'refNode'], optional: ['refType', 'refSubNode'] },
   'set-nested-component-field': { required: ['node', 'componentType', 'property', 'value'], optional: ['subNode'] },
   // bulk-set 的 target 是 "node" 或 "component:<type>" 字符串模式，不是 selector

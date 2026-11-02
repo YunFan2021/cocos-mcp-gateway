@@ -42,6 +42,8 @@ Batch options:
   --dry-run              不写盘，输出会改的字段 diff（{ path: [old, new] } 形式）。
 
 Supported ops:
+  unpack-nested-prefab                       # 解开一层嵌套实例；保留内部子 Prefab、属性与绑定
+  remap-assets                              # assetMap 批量归并 UUID；fileIdMap 迁移 TargetInfo.localID，不改宿主 fileId
   set-position / set-label-text / set-sprite-frame / set-active / rename-node
   set-component-field                       # 普通节点改任意组件任意字段，property 接字符串或嵌套路径数组
   set-component-enabled                     # 改 _enabled
@@ -52,7 +54,10 @@ Supported ops:
   bulk-set                                  # 按 selector（byComponent/byNamePrefix/byNameRegex）一次改一批
   add-node / remove-node / clone-node
   add-spine-socket                        # 给 sp.Skeleton 增加/更新 socket 绑定
-  add-component / set-component-ref         # componentType 支持 @ccclass 名或压缩 classId
+  add-component / remove-component / replace-component / set-component-ref
+                                             # replace-component 原位替换并保留引用；replacementType 缺省时同类型重建
+                                             # refreshFileId=true 可模拟删旧再挂新（需重核外层 nested override）
+                                             # componentType 支持 @ccclass 名或压缩 classId
                                              # set-component-ref 的 refSubNode 可用字符串数组走多层嵌套 stub
   set-nested-component-field                # 仅 stub 节点（嵌套 prefab）改组件字段
   dedupe-component                          # 合并同节点重复组件
