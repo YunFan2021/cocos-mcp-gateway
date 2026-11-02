@@ -24,6 +24,10 @@ description: 连接和控制当前工作区对应的 Cocos Creator 项目。处�
 
 修改 Prefab 前先查询节点树或字段；批量修改先 dry-run；任一操作失败时不要绕过 CLI 直接改 JSON。
 
+## 打开并回读 Prefab
+
+先调用项目的 scene_query_context。需要切换时调用 prefab_open({asset})，优先传完整 db://assets URL。同名资源按 UUID 区分，仅在 opened 或 already_open 后使用返回的 rootUuid 查询节点。blocked 表示未保存或状态不确定，请用户处理。busy、pending、unconfirmed 时先查询上下文，不重试切换或代为保存。若迟到请求一直无法确认，由用户在编辑器中打开请求的目标并确认上下文后再继续。
+
 ## 修改后的闭环
 
 只核对本次修改的资源、节点和字段；纯文档修改不触发资源导入。
