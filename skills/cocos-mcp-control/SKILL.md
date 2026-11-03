@@ -48,3 +48,13 @@ description: 连接和控制当前工作区对应的 Cocos Creator 项目。处�
 - 工具行为、文档与实际不一致时报告插件问题，不在业务项目添加临时 workaround。
 - 若只看到旧项目工具前缀，先检查是否有固定项目入口；有则按目标 `projectPath` 查询和调用，无需重启 Creator。若固定入口也不存在，说明当前连接仍加载旧版 Gateway，需要重连 MCP 或在加载新版插件后启动新会话。
 - 详细工具分工和失败排查见 [references/operations.md](references/operations.md)。
+
+
+### 编辑写入保护
+
+- scene_open_scene、scene_soft_reload、scene_save_scene、scene_set_property 和 preview_refresh_and_reload 与 prefab_open 共用操作锁及迟到消息保护。
+- scene_save_scene 和 preview_refresh_and_reload 必须传 expectedAssetUuid。保存需要用户已授权保存该资源，工具不自动保存或丢弃未保存编辑。其他受保护入口可传 expectedAssetUuid 检测调用前的页面切换。
+- 这些受保护工具返回结构化 status，completed 表示操作完成，blocked 表示上下文冲突或未保存，unconfirmed/pending 时用 prefab_query_open 查询操作。不得再把任意非空返回值视为成功。
+- scene_set_property 配对 begin-recording/end-recording，保证 Creator 修改记录及 dirty 状态正确；失败时保留诊断及迟到保护，不自动回滚其他编辑。
+- Bridge 验证现有 inputSchema 的类型、必填字段、枚举及顶层未知字段。dump 和脚本 args 的开放内容仍按工具声明处理。参数错误返回 isError 与 INVALID_ARGUMENTS，不发送 Editor 消息。
+- 共享锁覆盖以上命名入口；scene_execute_script 和 scene_execute_component_method 属于显式执行能力，仍需调用者根据具体方法检查副作用。
