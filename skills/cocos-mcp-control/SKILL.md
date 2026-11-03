@@ -26,7 +26,7 @@ description: 连接和控制当前工作区对应的 Cocos Creator 项目。处�
 
 ## 打开并回读 Prefab
 
-先调用项目的 scene_query_context。需要切换时调用 prefab_open({asset})，优先传完整 db://assets URL。同名资源按 UUID 区分，仅在 opened 或 already_open 后使用返回的 rootUuid 查询节点。blocked 表示未保存或状态不确定，请用户处理。busy、pending、unconfirmed 时先查询上下文，不重试切换或代为保存。若迟到请求一直无法确认，由用户在编辑器中打开请求的目标并确认上下文后再继续。
+先调用 scene_query_context，检查 reason 和 diagnostics。默认查询总预算 3000ms，未知 dirty 不能视为已保存。用 prefab_open({asset}) 打开本项目资源，返回 operationId、phase、startedAt（Unix 毫秒）、elapsedMs、dispatched、settled 和最后上下文。仅 opened/already_open 可回读实例。busy/pending/unconfirmed 时调用 prefab_query_open({operationId}) 诊断，禁止重复发起切换。预检超时且 dispatched=false 时可重新检查后再操作。已发出请求只有在消息结束且目标实际加载后，状态查询才解除保护；请求一直不结束时保留保护，需要人工确认 Creator 状态。查询不会取消 Creator 请求。扩展重载后旧 operationId 返回 not_found，不能以此认定旧请求已取消。
 
 ## 修改后的闭环
 
