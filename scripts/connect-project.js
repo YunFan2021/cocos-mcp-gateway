@@ -69,7 +69,9 @@ if (installedExtension) {
     fail(`已安装扩展缺少 main.js: ${installedExtension}`);
   }
   process.stdout.write(`项目已接入 Cocos MCP 3.8.x Editor Bridge，未覆盖现有扩展:\n  ${installedExtension}\n`);
-  process.exit(0);
+  const comparison = require('./check-extension').compareInstallation(installedExtension);
+  process.stdout.write(JSON.stringify(comparison, null, 2) + '\n');
+  process.exit(comparison.status === 'matched' ? 0 : 1);
 }
 
 if (fs.existsSync(target)) {
