@@ -26,7 +26,16 @@ description: 连接和控制当前工作区对应的 Cocos Creator 项目。处�
 
 ## 打开并回读 Prefab
 
-先调用 scene_query_context，检查 reason 和 diagnostics。默认查询总预算 3000ms，未知 dirty 不能视为已保存。用 prefab_open({asset}) 打开本项目资源，返回 operationId、phase、startedAt（Unix 毫秒）、elapsedMs、dispatched、settled 和最后上下文。仅 opened/already_open 可回读实例。busy/pending/unconfirmed 时调用 prefab_query_open({operationId}) 诊断，禁止重复发起切换。预检超时且 dispatched=false 时可重新检查后再操作。已发出请求只有在消息结束且目标实际加载后，状态查询才解除保护；请求一直不结束时保留保护，需要人工确认 Creator 状态。查询不会取消 Creator 请求。扩展重载后旧 operationId 返回 not_found，不能以此认定旧请求已取消。
+先调用 scene_query_context，检查 reason 和 diagnostics。默认查询总预算 3000ms，未知 dirty 不能视为已保存。用 prefab_open({asset}) 打开本项目资源，并以返回的 assetUuid 和 rootUuid 回读实例。
+
+- 操作返回 operationId、kind、phase、requestOutcome（not_started/pending/fulfilled/rejected）、requestError、settledAt、timedOut、lockActive 和 recovery。外层等待 TIMEOUT 不等于请求结束；迟到错误保存在 requestError，不再仅重复初次 TIMEOUT。
+- busy/pending/unconfirmed 时先用 prefab_query_open({operationId})，不得重复派发切换、保存或重载。明确执行异常（TypeError/ReferenceError/RangeError/SyntaxError 或扩展已知拒绝）且连续上下文就绪、干净、稳定后，查询可返回 failed 且 lockActive=false；这只表示旧保护已结束，原操作仍失败。可继续其他已授权工作，重试失败写入仍需核对是否必要及是否会重复副作用。
+- 请求成功且目标已加载时恢复为 opened/completed。消息结束但目标未加载时继续保护，不能凭页面短暂稳定认定打开完成。
+- 人工打开/切换页面后先查 scene_query_context，再用 prefab_recover_operation({operationId, expectedAssetUuid, expectedRootUuid}) 核对旧操作。此入口不保存、不取消、不重试，也没有 force。消息成功、页面已被接手且稳定时可返回 superseded；这不是旧目标实例验证通过。
+- 目标已经打开时，prefab_open 可以仅查询并返回 already_open、readOnly=true 和 blockingOperation。lockActive=true 时只可回读当前实例；不得把它当作旧操作完成或新写入授权。也可直接用 scene_query_context 和只读节点工具继续检查。
+- requestOutcome=pending，或 requestError.effectUncertain=true（传输超时、断连或无法分类的错误）时仍保留保护。已保存、相同资源甚至根节点更新都不能单独证明远端请求已停止；不强制清锁、不通过扩展重载掩盖未确认请求。
+- 扩展重载后旧 operationId 返回 not_found，不能据此认定旧请求取消。旧版遗留记录若缺少真实请求结果，保留其诊断；必要时在确认无未保存编辑、无活跃调试并获任务授权后重启对应 Creator 进程，核对新 PID 和上下文。仅重载扩展不能终止旧 Creator 请求。
+
 
 ## 修改后的闭环
 
