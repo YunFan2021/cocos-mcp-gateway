@@ -65,7 +65,7 @@ codex plugin add cocos-mcp@happylifeok-cocos
 - `cocos-mcp-control` Skill。
 
 安装或升级后请重新连接 Cocos MCP，或新建一个任务加载新版 Skill 和 MCP 工具。
-新版 Gateway 始终提供 `gateway_get_project_tools` 与 `gateway_call_project_tool`：先按项目绝对路径查询工具定义，再按同一路径调用。
+新版 Gateway 始终提供 `gateway_get_project_tools` 与 `gateway_call_project_tool`：先用 `gateway_list_editors` 精确匹配项目真实绝对路径，再按该路径查询工具定义、调用目标工具。同一路径有多个编辑器时，查询和调用均传同一已确认的 `pid`。
 固定入口加载后，打开或切换 Creator 项目不再要求客户端动态刷新项目工具前缀；已有连接若连固定入口都没有，仍需重连一次。
 
 ### Claude Code
@@ -123,7 +123,7 @@ Gateway。
 ```
 
 ```text
-把 Home.prefab 里的 StartButton 向下移动 20 像素，刷新资源并验证预览。
+把 Home.prefab 里的 StartButton 向下移动 20 像素，确认导入后回读编辑器实例的位置，先不运行游戏预览。
 ```
 
 ```text
@@ -201,8 +201,9 @@ Gateway。
 
 ### 修改 Prefab 后为什么编辑器里没有变化？
 
-离线写盘不会自动触发 Cocos 导入。让 AI 按 Skill 流程执行资源重导，并根据项目情况
-刷新预览。
+先区分磁盘文件、AssetDB 导入和编辑器实例。核对磁盘差异并保护未保存编辑，再确认目标资源已导入、回读实际加载实例的字段。若只确认了导入，就报告实例尚未验证。
+
+确需软重载时，`preview_refresh_and_reload` 会刷新资产并重载当前编辑器场景，要求目标 UUID 匹配且无未保存编辑；随后仍需回读。要验证游戏画面或交互，明确要求游戏预览，再通过浏览器检查真实页面。
 
 ## 相关链接
 

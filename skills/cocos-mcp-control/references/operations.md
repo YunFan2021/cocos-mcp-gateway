@@ -10,11 +10,13 @@
 | 查询场景运行态节点 | `<shortName>__scene_query_node_tree` / `<shortName>__scene_query_node` |
 | 修改运行态属性或执行组件方法 | `<shortName>__scene_set_property` / `<shortName>__scene_execute_component_method` |
 | 查询和重导资源 | `<shortName>__asset_query_*` / `<shortName>__asset_reimport` |
-| 获取或刷新预览 | `<shortName>__preview_query_url` / `<shortName>__preview_refresh_and_reload` |
+| 确认导入 / 回读资源绑定 | `asset_reimport_confirm` 核对导入状态；`scene_verify_bindings` 只读比对目标实例字段 |
+| 刷新资产并软重载当前编辑器场景 | 确有需要且目标一致、无未保存编辑时调用 `preview_refresh_and_reload`，传 `expectedAssetUuid`；随后回读实例 |
+| 验证游戏画面或交互 | 用户明确要求预览时，用 `preview_query_url` 查询地址，通过浏览器进入目标页面验证 |
 
 ## 项目识别
 
-优先用当前工作区的真实绝对路径匹配注册项的 `projectPath`。符号链接路径需先规范化。同名项目或多个 worktree 不能只用 `shortName`。
+先调用 `gateway_list_editors`，将规范化的项目真实绝对路径与 `projectPath` 精确匹配。优先用 `gateway_get_project_tools` 查询工具定义，再用 `gateway_call_project_tool` 调用原始工具名（不带前缀）。同项目多实例时两个调用均传同一个已确认的 `pid`。表中的带前缀形式仅用于当前会话已注入且确认匹配的工具。
 
 编辑器未启动时：
 
@@ -28,7 +30,7 @@
 - 没有项目注册：编辑器未启动，或项目侧扩展未启用。
 - 注册存在但 `/bridge` 不通：等待扩展完成启动；仍失败时由用户决定是否重启扩展或编辑器。不要把 Bridge 当成 MCP endpoint 直接调用。
 - offline 修改后界面不变：按下述字段回读闭环检查导入、目标实例及 override；不默认刷新预览或重开场景。
-- 工具前缀变化：重新调用 `gateway_list_editors`，以当前返回的 `shortName` 为准。
+- 工具前缀变化：重新列出实例并按真实绝对路径匹配，再通过固定入口调用。
 - Prefab 修改报结构错误：停止修改，先查询节点、stub 和 override；禁止直接文本编辑 JSON 数组。
 
 ## 字段回读闭环
